@@ -55,22 +55,37 @@ const io = socketIo(server, {
 });
 initSocketIO(io);
 
-// MongoDB connection
+// MongoDB connection with caching for serverless
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mychat';
 
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
+    isConnected = true;
     console.log('MongoDB connected successfully');
-    server.listen(PORT, () => {
-      console.log(`MyChat Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('MongoDB connection error:', err.message);
-    // Allow server to run even if Mongo is pending connection
-    server.listen(PORT, () => {
-      console.log(`MyChat Server running on port ${PORT} (Database pending connection)`);
-    });
+  }
+};
+
+connectDB();
+
+// Middleware to ensure DB connection on serverless requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// Run server.listen only when not running inside Vercel serverless environment
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`MyChat Server running on port ${PORT}`);
   });
+}
+
+module.exports = app;
