@@ -1,0 +1,6 @@
+{
+  "name": "MyChat",
+  "description": "WhatsApp-style messaging app with real-time chats, groups, voice notes, media sharing, and dark mode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
